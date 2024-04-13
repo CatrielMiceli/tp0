@@ -5,9 +5,9 @@ t_log* logger;
 int iniciar_servidor(void)
 {
 	// Quitar esta línea cuando hayamos terminado de implementar la funcion
-	assert(!"no implementado!");
+	//assert(!"no implementado!");
 
-	int socket_servidor;
+	int fd_escucha;
 
 	struct addrinfo hints, *servinfo, *p;
 
@@ -16,27 +16,38 @@ int iniciar_servidor(void)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
+	// Si el flag AI_PASSIVE está presente en hints.ai_flags y el primer parámetro de getaddrinfo() es NULL, las direcciones devueltas por getaddrinfo() son las adecuadas para crear un socket de escucha.
+
 	getaddrinfo(NULL, PUERTO, &hints, &servinfo);
+	// En serveinfo se guarda todos los datos necesarios para la creacion del socket
 
 	// Creamos el socket de escucha del servidor
 
+	fd_escucha = socket(servinfo->ai_family,
+                        servinfo->ai_socktype,
+                        servinfo->ai_protocol);
+
 	// Asociamos el socket a un puerto
+
+	bind(fd_escucha, servinfo->ai_addr, servinfo->ai_addrlen);
 
 	// Escuchamos las conexiones entrantes
 
-	freeaddrinfo(servinfo);
+	listen(fd_escucha, SOMAXCONN); // SOMAXCONN es la cantidad de conexiones vivas q puede mantener el SO
+
+	freeaddrinfo(servinfo); // Libera la memoria del puntero
 	log_trace(logger, "Listo para escuchar a mi cliente");
 
-	return socket_servidor;
+	return fd_escucha;
 }
 
-int esperar_cliente(int socket_servidor)
+int esperar_cliente(int fd_escucha)
 {
 	// Quitar esta línea cuando hayamos terminado de implementar la funcion
-	assert(!"no implementado!");
+	//assert(!"no implementado!");
 
 	// Aceptamos un nuevo cliente
-	int socket_cliente;
+	int socket_cliente = accept(fd_escucha, NULL, NULL);
 	log_info(logger, "Se conecto un cliente!");
 
 	return socket_cliente;
@@ -69,7 +80,7 @@ void recibir_mensaje(int socket_cliente)
 {
 	int size;
 	char* buffer = recibir_buffer(&size, socket_cliente);
-	log_info(logger, "Me llego el mensaje %s", buffer);
+	log_info(logger, "Me llego el mensaje: %s", buffer);
 	free(buffer);
 }
 
